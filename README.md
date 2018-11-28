@@ -149,7 +149,7 @@ Un exemple simple de programme valide est :
 }
 ```
 
-Pour plus d'informations sur la syntaxe, vous pouvez consulter le fichier d'analyse syntaxique [src/frontend/parser.mly](frontend/parser.mly).
+Pour plus d'informations sur la syntaxe, vous pouvez consulter le fichier d'analyse syntaxique [src/frontend/parser.mly](src/frontend/parser.mly).
 Vous trouverez également des exemples de programmes dans le répertoire [tests/](tests).
 
 ## Options de l'analyseur

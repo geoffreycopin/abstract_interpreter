@@ -1,7 +1,7 @@
 (*
-  Cours "Typage et Analyse Statique"
-  Université Pierre et Marie Curie
-  Antoine Miné 2015
+  Cours "Typage et Analyse Statique" - Master STL
+  Sorbonne Université
+  Antoine Miné 2015-2018
 *)
 
 (* 
@@ -216,7 +216,7 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
       VarMap.for_all2z (fun _ x y -> V.subset x y) m n
 
 
-  (* check the emptyness *)
+  (* check the emptiness *)
   let is_bottom a = 
     a = BOT
 

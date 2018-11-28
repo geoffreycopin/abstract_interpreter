@@ -185,19 +185,19 @@ En cas d'échec d'un test, déterminez dans `constant_domain.ml` la source de l'
 
 Dans cet exercice vous implanterez le domaine des intervalles vu en cours.
 Comme le domaine des constantes, il obéit à la signature `Value_domain.VALUE_DOMAIN` et sert de paramètre au foncteur `Non_relational_domain.NonRelational`.
-Faites attention à ce que l'on gère des entiers mathématiques arbitraires.
+Faites attention à ce que l'on gère des ensembles d'entiers mathématiques arbitraires.
 Les bornes des intervalles ne sont donc pas forcément des entiers, mais peuvent être aussi +∞ ou −∞.
 
 La signature `Value_domain.VALUE_DOMAIN` comporte de nombreuses fonctions.
 Vous implanterez de la manière la plus précise possible au moins les fonctions suivantes : `top`, `bottom`, `const`, `rand`, `meet`, `join`, `subset`, `is_bottom`, `print`, `unary`, `binary`, `compare`.
 Pour les fonctions `bwd_unary` et `bwd_binary`, une implantation approchée suffira.
-Néanmoins, il est indispensable que toutes les fonctions renvoient un résultat sûr, même si il est imprécis.
+Néanmoins, il est indispensable que toutes les fonctions renvoient un résultat sûr, même s'il est imprécis.
 
 Le domaine des intervalles sera activé par l'option `-interval` passée en ligne de commande.
 
 Décommentez dans [scripts-ci/run.sh](scripts-ci/run.sh) la ligne [tests/10_interval/](tests/10_interval/) pour tester votre implantation.
 
-Si vous choisissez d'implanter plus précisément `bwd_unary` et `bwd_binary`, vous pourrez tester ces fonctions en décommentant de plus la ligne [tests/11_interval_cmp/](tests/11_interval_cmp/).
+Si vous choisissez d'implanter plus précisément `bwd_unary` et `bwd_binary`, vous pourrez tester ces fonctions en décommentant également la ligne [tests/11_interval_cmp/](tests/11_interval_cmp/).
 
 Les fichiers `.expected` considèrent qu'une information d'intervalle est affichée soit comme `⊥` (vide), soit comme `[a;b]`, où a est la borne inférieure (entier ou `-∞`) et b est la borne supérieure (entier ou `+∞`).
 Il est important de respecter ces conventions dans la fonction `print` de votre domaine pour faciliter les tests de régression.
@@ -206,7 +206,7 @@ Il est important de respecter ces conventions dans la fonction `print` de votre 
 ### Analyse des boucles
 
 Le traitement des boucles dans `interpreter.ml` suppose que le domaine abstrait n'a pas de chaîne infinie strictement croissante.
-Que se passe-t-il alors lors d'une analyse d'intervalles ?
+Que se passe-t-il lors d'une analyse d'intervalles ?
 
 Le but de la question est de corriger ce problème en ajoutant l'utilisation des élargissements.
 Nous procéderons par étapes :
@@ -225,7 +225,7 @@ Quelle différence avec `-delay n` ?
 Implantez le domaine de parité, mentionné en cours, puis le produit réduit des intervalles avec la parité.
 Essayez, autant que possible, de définir un foncteur générique "produit réduit" prenant en argument deux domaines abstraits de valeurs arbitraires.
 
-Le domaine des intervalle sera activé par l'option `-parity-interval` passé en ligne de commande.
+Le domaine des intervalle sera activé par l'option `-parity-interval` passée en ligne de commande.
 
 Décommentez dans [scripts-ci/run.sh](scripts-ci/run.sh) la ligne [tests/20_reduced](tests/20_reduced/) pour tester votre implantation avec l'option `-parity-interval`.
 Le fichier `.expected` s'attend à ce qu'un invariant du produit réduit soit affiché sous la forme `parité ∧ intervalle`, où la parité est soit `even` (pair), soit `odd` (impair), et l'intervalle est affiché comme aux questions précédentes.
@@ -236,7 +236,7 @@ Le fichier `.expected` s'attend à ce qu'un invariant du produit réduit soit af
 Cette section propose plusieurs améliorations que vous pourrez apporter à votre analyseur.
 Il est demandé dans le projet de choisir et d'implanter une de ces extensions, en plus de l'intégralité de la partie précédente.
 
-De plus, vous fournirez des exemples de test dans un répertoire [tests/30_extension/](tests/30_extension/)
+De plus, vous fournirez des exemples de test qui utilisent votre extension dans un répertoire [tests/30_extension/](tests/30_extension/).
 
 
 ### Analyse relationnelle avec Apron
@@ -249,7 +249,7 @@ Proposez des exemples illustrant l'amélioration de la précision.
 
 ### Analyse disjonctive
 
-L'analyse des intervalles est imprécise car elle ne représente que des ensembles de valeurs convexes.
+L'analyse des intervalles est imprécise car elle ne représente que des ensembles convexes de valeurs.
 Nous verrons en cours plusieurs constructions permettant de corriger ce problème en raisonnant sur des disjonctions d'intervalles : complétion disjonctive, partitionnement d'états, partitionnement de traces.
 Implantez une de ces techniques dans votre analyseur, et proposez des exemples illustrant l'amélioration de la précision qu'elle apporte.
 
@@ -257,7 +257,8 @@ Implantez une de ces techniques dans votre analyseur, et proposez des exemples i
 ### Analyse des entiers machine modulaires
 
 Le type `int` du language correspond à des entiers mathématiques parfaits.
-Modifiez cette interprétation dans `concrete_domain.ml` pour correspondre à des entiers 32-bit signés et illustrez avec des exemples de programmes où le comportement diffère (conseil : on peut voir une opération sur 32-bit comme une opération sur les entiers mathématiques, suivie d'une opération de correction qui ramène le résultat dans [−2^31 , 2^(31−1)] ; il suffit donc d'ajouter cette étape après chaque calcul).
+Modifiez cette interprétation dans `concrete_domain.ml` pour correspondre à des entiers 32-bit signés (conseil : on peut voir une opération sur 32 bits comme une opération sur les entiers mathématiques, suivie d'une opération de correction qui ramène le résultat dans [−2^31 , 2^31−1] ; il suffit donc d'ajouter cette étape après chaque calcul).
+Illustrez votre analyse avec des exemples de programmes où le comportement diffère.
 
 Modifiez ensuite tous les domaines implantés (constantes, intervalles, parité) pour que la sémantique corresponde à un calcul dans des entiers signés 32-bit, et non dans les entiers mathématiques.
 Montrez sur des exemples la différence entre ces deux sémantiques, et en particulier l'impact en terme de précision de l'analyse.
@@ -277,7 +278,7 @@ Lire ou modifier la valeur référencée par un pointeur non initialisé (entre 
 Par ailleurs, si `p` référence une variable `x` déclarée dans un bloc, alors référencer ce pointeur après la sortie du bloc provoquera également une erreur.
 L'analyseur devra détecter ces erreurs et les afficher.
 
-Le support pour les pointeurs peut être ajouté à l'analyseur par un domaine de pointeurs qui associe à chaque variable pointeur un ensemble de variables possibles référencées.
+Le support pour les pointeurs peut être ajouté à l'analyseur par un domaine de pointeurs (vu en cours) qui associe à chaque variable pointeur un ensemble de variables possibles référencées.
 Vous implanterez cette techniques et proposerez des exemples pour l'illustrer.
 
 
@@ -287,11 +288,11 @@ Ajoutez le support dans votre langage et dans votre analyse pour les tableaux.
 
 Chaque tableau sera déclaré avec une taille fixe, par exemple : `int tab[10]`.
 Lors d'un accès dans un tableau `tab[expr]`, nous nous intéressons à :
-1. vérifier que l'expression `expr` représente bien un indice valide du tableau, c'est à dire s'évalue en une valeur entre 0 et n−1 (sinon, une erreur est affichée, à la manière d'un échec d'assertion) ;
+1. vérifier que l'expression `expr` représente bien un indice valide du tableau, c'est à dire s'évalue en une valeur entre zéro et sa taille moins 1 (sinon, une erreur est affichée, à la manière d'un échec d'assertion) ;
 2. inférer des informations sur les valeurs contenues dans le tableau (par exemple, un intervalle de valeurs).
 
 Pour le deuxième point, deux représentations abstraites d'un tableau sont possibles :
-* traiter chaque case `tab[0]`, ..., `tab[n-1]` comme une variable indépendante, et lui associer un intervalle ;
+* traiter chaque case `tab[0]`, ..., `tab[9]` comme une variable indépendante, et lui associer un intervalle ;
 * ou utiliser une seule variable `tab[*]` et un unique intervalle par tableau qui représente l'ensemble de toutes les valeurs possibles de toutes les cases du tableau.
 
 Vous implanterez ces deux techniques et proposerez des exemples pour illustrer la différence de précision et de coût entre les deux.
@@ -299,5 +300,5 @@ Vous implanterez ces deux techniques et proposerez des exemples pour illustrer l
 
 ### Extension libre
 
-Vous pouvez alternativement proposer une extension non décrite ici et l'implanter, à condition que votre choix soit validé en amont par le chargé de TME.
+Vous pouvez également proposer et implanter une extension non décrite ici, à condition que votre choix soit d'abord validé par le chargé de TME.
 

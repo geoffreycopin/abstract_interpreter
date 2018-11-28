@@ -1,7 +1,7 @@
 (*
-  Cours "Typage et Analyse Statique"
-  Université Pierre et Marie Curie
-  Antoine Miné 2015
+  Cours "Typage et Analyse Statique" - Master STL
+  Sorbonne Université
+  Antoine Miné 2015-2018
 *)
 
 (* 
@@ -38,7 +38,7 @@ module type VALUE_DOMAIN =
     (* subset inclusion *)
     val subset: t -> t -> bool
         
-    (* emptyness testing *)
+    (* emptiness testing *)
     val is_bottom: t -> bool
         
     (* print abstract element *)

@@ -1,6 +1,6 @@
-# Cours "Typage et Analyse Statique"
-# Université Pierre et Marie Curie
-# Antoine Miné 2015
+# Cours "Typage et Analyse Statique" - Master STL
+# Sorbonne Université
+# Antoine Miné 2015-2018
 
 # Makefile
 

@@ -1,7 +1,7 @@
 (*
-  Cours "Typage et Analyse Statique"
-  Université Pierre et Marie Curie
-  Antoine Miné 2015
+  Cours "Typage et Analyse Statique" - Master STL
+  Sorbonne Université
+  Antoine Miné 2015-2018
 *)
 
 (* 
@@ -108,7 +108,7 @@ module Concrete = (struct
         ValSet.singleton (Z.of_string s)
 
     | AST_rand ((l1,_),(l2,_)) ->
-        (* converst the bounds to integer *)
+        (* convert the bounds to integer *)
         let l1 = Z.of_string l1
         and l2 = Z.of_string l2 in
         (* construct the set [l1;l2] *)

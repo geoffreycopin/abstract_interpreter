@@ -1,7 +1,7 @@
 (*
-  Cours "Typage et Analyse Statique"
-  Université Pierre et Marie Curie
-  Antoine Miné 2015
+  Cours "Typage et Analyse Statique" - Master STL
+  Sorbonne Université
+  Antoine Miné 2015-2018
 *)
 
 (* 
@@ -120,11 +120,11 @@ module Constants = (struct
   | Cst x, Cst y -> x=y
   | _ -> false
 
-  (* check the emptyness of the concretization *)
+  (* check the emptiness of the concretization *)
   let is_bottom a =
     a=BOT
 
-  (* prints abstract element *)
+  (* print abstract element *)
   let print fmt x = match x with
   | BOT -> Format.fprintf fmt "⊥"
   | TOP -> Format.fprintf fmt "⊤"
