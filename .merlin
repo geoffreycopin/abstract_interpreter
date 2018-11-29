@@ -1,0 +1,11 @@
+S src
+S src/frontend
+S src/domains
+S src/interpreter
+S src/libs
+
+B src
+B src/frontend
+B src/domains
+B src/interpreter
+B src/libs
