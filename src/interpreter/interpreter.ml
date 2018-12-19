@@ -112,7 +112,7 @@ module Interprete(D : DOMAIN) =
 
       
   (* interprets a statement, by induction on the syntax *)
-  let rec eval_stat (a:t) ((s,ext):stat ext) : t = 
+  let rec eval_stat (a:t) ((s,ext):stat ext) : t =
     let r = match s with    
 
     | AST_block (decl,inst) ->
@@ -165,9 +165,10 @@ module Interprete(D : DOMAIN) =
         filter inv e false
 
     | AST_assert e ->
-       (* not implemented *)
-       (* to be sound, we return the argument unchanged *)
-       a
+       let f = filter a e false in
+       let t = filter a e true in
+       if f != D.bottom () then error ext "assertion failure";
+       t
           
     | AST_print l ->
         (* print the current abstract environment *)
