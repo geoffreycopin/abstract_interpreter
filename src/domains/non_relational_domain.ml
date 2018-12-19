@@ -183,9 +183,10 @@ module NonRelational(V : VALUE_DOMAIN) = (struct
       
 
   (* join *)
-  let join a b = match a,b with
-  | BOT,x | x,BOT -> x
-  | Val m, Val n ->
+  let join a b =
+    match a,b with
+    | BOT,x | x,BOT -> x
+    | Val m, Val n ->
       Val (VarMap.map2z (fun _ x y -> V.join x y) m n)
 
   (* meet *)

@@ -29,6 +29,12 @@ module Constants = (struct
   (* utilities *)
   (* ********* *)
 
+   (* print abstract element *)
+  let print fmt x = match x with
+    | BOT -> Format.fprintf fmt "⊥"
+    | TOP -> Format.fprintf fmt "⊤"
+    | Cst x -> Format.fprintf fmt "{%s}" (Z.to_string x)
+
 
   (* lift unary arithmetic operations, from integers to t *)
   let lift1 f x =
@@ -74,7 +80,8 @@ module Constants = (struct
 
   let sub = lift2 Z.sub
 
-  let mul = lift2 Z.mul
+  let mul a b = if a = Cst Z.zero || b = Cst Z.zero then Cst Z.zero
+                else lift2 Z.mul a b
 
   let div a b =
     if b = Cst Z.zero then BOT
@@ -83,7 +90,10 @@ module Constants = (struct
 
   (* set-theoretic operations *)
   
-  let join a b = match a,b with
+  let join a b =
+    (*print Format.std_formatter a;*)
+    (*print Format.std_formatter b;*)
+    match a,b with
   | BOT,x | x,BOT -> x
   | Cst x, Cst y when x=y -> a
   | _ -> TOP
@@ -100,18 +110,31 @@ module Constants = (struct
 
   (* comparison operations (filters) *)
 
-  let eq a b =
-    (* this is not very precise, how can we improve it ? *)
-    a, b
+  let eq a b = match a, b with
+    | TOP, TOP -> (a, b)
+    | TOP, Cst y -> (Cst y, Cst y)
+    | Cst x, TOP -> (Cst x, Cst x)
+    | Cst x, Cst y when Z.compare x y = 0 -> (a, b)
+    | _ -> (BOT, BOT)
 
-  let neq a b =
-    a, b
+  let neq a b = match a, b with
+    | TOP, _ -> (a, b)
+    | _, TOP -> (a, b)
+    | Cst x, Cst y when Z.compare x y != 0 -> (a, b)
+    | _ -> (BOT, BOT)
 
-  let geq a b =
-    a, b
+  let geq a b = match a, b with
+    | TOP, TOP  -> (a, b)
+    | TOP, Cst _ -> (a, b)
+    | Cst _, TOP -> (a, b)
+    | Cst x, Cst y when Z.compare x y >= 0 -> (a, b)
+    | _ -> (BOT, BOT)
 
-  let gt a b =
-    a, b
+  let gt a b = match a, b with
+    | TOP, TOP -> (a, b)
+    | TOP, Cst y | Cst y, TOP -> (a, b)
+    | Cst x, Cst y when Z.compare x y = 1 -> (a, b)
+    | _ -> (BOT, BOT)
 
 
   (* subset inclusion of concretizations *)
@@ -123,12 +146,6 @@ module Constants = (struct
   (* check the emptiness of the concretization *)
   let is_bottom a =
     a=BOT
-
-  (* print abstract element *)
-  let print fmt x = match x with
-  | BOT -> Format.fprintf fmt "⊥"
-  | TOP -> Format.fprintf fmt "⊤"
-  | Cst x -> Format.fprintf fmt "{%s}" (Z.to_string x)
 
 
   (* operator dispatch *)
@@ -143,7 +160,8 @@ module Constants = (struct
   | AST_MULTIPLY -> mul x y
   | AST_DIVIDE   -> div x y
 
-  let compare x y op = match op with
+  let compare x y op =
+  match op with
   | AST_EQUAL         -> eq x y
   | AST_NOT_EQUAL     -> neq x y
   | AST_GREATER_EQUAL -> geq x y
