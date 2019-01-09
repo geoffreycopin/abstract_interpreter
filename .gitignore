@@ -20,3 +20,17 @@ parser.ml
 parser.mli
 
 _build/
+
+result\.html
+
+tests/\.DS_Store
+
+src/\.DS_Store
+
+projet-tas\.iml
+
+\.vscode/launch\.json
+
+\.idea/
+
+\.DS_Store
