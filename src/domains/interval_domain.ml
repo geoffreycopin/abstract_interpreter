@@ -32,39 +32,46 @@ let bound_cmp (a:bound) (b:bound) = match a, b with
 module Intervals = (struct
 
   type t =
-    | E
-    | I of bound * bound
-
-  let restore x = match x with
-    | E -> E
-    | I(low, up) -> if compare up low = -1 then reverse x else x
-
-  let reverse x = match x with
-    | E -> E
-    | I(low, up) -> I(up, low)
+    | BOT
+    | Itv of bound * bound
 
   let print fmt x = match x with
-    | E -> Format.fprintf fmt "⊥"
-    | I (low, up) -> Format.fprintf fmt "[";
-                  print_bound fmt low;
-                  Format.fprintf fmt ";";
-                  print_bound fmt up;
-                  Format.fprintf fmt "]"
+    | BOT -> Format.fprintf fmt "⊥"
+    | Itv(a, b) -> Format.fprintf fmt "[";
+                   print_bound fmt a;
+                   Format.fprintf fmt ";";
+                   print_bound fmt b;
+                   Format.fprintf fmt "]"
+
 
   let lift1 f x = match x with
-    | E -> E
-    | I(low, up) ->  restore I(f low, f up)
+    | BOT -> BOT
+    | Itv(a, b) -> f a b
 
-  let top = I (MINF, PINF)
+  let lift2 f x y = match x,y with
+    | BOT,_ | _,BOT -> BOT
+    | Itv(a,b), Itv(c, d) -> f a b c d
 
-  let bottom = E
+  let neg x =
+    lift1 (fun a b -> Itv(bound_neg b, bound_neg a)) x
 
-  let const c = I (Int c, Int c)
+  let subset (x:t) (y:t) : bool = match x,y with
+    | BOT,_ -> true
+    | _,BOT -> false
+    | Itv(a, b), Itv(c, d) -> bound_cmp a c >= 0 && bound_cmp b d <= 0
 
-  let rand x y = I (Int x, Int y)
+  let top = Itv(MINF, PINF)
+
+  let bottom = BOT
+
+  let const c = Itv(Int c, Int c)
+
+  let rand x y = Itv(Int x, Int y)
 
   let unary x op = match op with
     | AST_UNARY_PLUS -> x
-    | AST_UNARY_MINUS -> reverse (lift1 bound_neg x)
+    | AST_UNARY_MINUS -> neg x
+
+  
                            
 end: VALUE_DOMAIN)
