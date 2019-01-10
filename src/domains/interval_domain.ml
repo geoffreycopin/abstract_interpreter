@@ -57,7 +57,6 @@ let bound_min (l: bound list) =
 let bound_max (l: bound list) =
   List.fold_left (fun a b -> if bound_cmp a b > 0 then a else b) MINF l
 
-
 module Intervals = (struct
 
   type t =
@@ -81,8 +80,10 @@ module Intervals = (struct
     | BOT,_ | _,BOT -> BOT
     | Itv(a,b), Itv(c, d) -> f a b c d
 
-  let union x y =
-    lift2 (fun a b c d -> Itv(bound_min [a; c], bound_max [b; d])) x y
+  let union x y = match x, y with
+    | BOT, b -> b
+    | a, BOT -> a
+    | Itv(a, b), Itv(c, d) -> Itv(bound_min [a; c], bound_max [b; d])
 
   let inter x y =
     lift2 (fun a b c d ->
@@ -91,6 +92,15 @@ module Intervals = (struct
         else
           Itv(bound_max [a; c], bound_min [b; d])
       ) x y
+
+  let subset (x:t) (y:t) : bool = match x,y with
+    | BOT,_ -> true
+    | _,BOT -> false
+    | Itv(a, b), Itv(c, d) -> bound_cmp a c >= 0 && bound_cmp b d <= 0
+
+  let disjoint (x:t) (y:t): bool = match inter x y with
+    | BOT -> true
+    | _ -> false
 
   let neg x =
     lift1 (fun a b -> Itv(bound_neg b, bound_neg a)) x
@@ -126,10 +136,24 @@ module Intervals = (struct
     let negative = div' x (inter y (Itv(MINF, Int(Z.minus_one)))) in
     union positive negative
 
-  let subset (x:t) (y:t) : bool = match x,y with
-    | BOT,_ -> true
-    | _,BOT -> false
-    | Itv(a, b), Itv(c, d) -> bound_cmp a c >= 0 && bound_cmp b d <= 0
+  let eq a b = match a, b with
+    | BOT, _ | _, BOT -> BOT
+    | _ -> (inter a b, inter a b)
+
+  let neq a b = match a, b with
+    | BOT, _ | _, BOT | disjoint a b -> (a, b)
+    | Itv(a, b), Itv(c, d) when bound_eq a c && bound_eq b d -> (BOT, BOT)
+    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, Z.pred c), Itv(Z.succ b, d))
+    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(Z.succ d, b), Itv(c, Z.pred a))
+    | _ -> invalid_arg "bound_div"
+
+  let geq a b = union (gt a b) (eq a b)
+
+  let gt a b = match a, b with
+    | BOT, _ | _, BOT -> (a, b)
+    | Itv(a, b), Itv(c, d) when disjoint a b -> if bound_cmp b c < 0
+                                                then (BOT, b)
+                                                else (a, BOT)
 
   let top = Itv(MINF, PINF)
 
