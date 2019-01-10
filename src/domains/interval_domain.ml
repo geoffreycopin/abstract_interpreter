@@ -57,11 +57,23 @@ let bound_min (l: bound list) =
 let bound_max (l: bound list) =
   List.fold_left (fun a b -> if bound_cmp a b > 0 then a else b) MINF l
 
+let bound_succ a = match a with
+  | MINF | PINF -> a
+  | Int(x) -> Int(Z.succ x)
+
+let bound_pred a = match a with
+  | MINF | PINF -> a
+  | Int(x) -> Int(Z.pred x)
+
 module Intervals = (struct
 
   type t =
     | BOT
     | Itv of bound * bound
+
+  let is_bottom x = match x with
+    | BOT -> true
+    | _ -> false
 
   let print fmt x = match x with
     | BOT -> Format.fprintf fmt "⊥"
@@ -137,23 +149,28 @@ module Intervals = (struct
     union positive negative
 
   let eq a b = match a, b with
-    | BOT, _ | _, BOT -> BOT
+    | BOT, _ | _, BOT -> (BOT, BOT)
     | _ -> (inter a b, inter a b)
 
   let neq a b = match a, b with
-    | BOT, _ | _, BOT | disjoint a b -> (a, b)
-    | Itv(a, b), Itv(c, d) when bound_eq a c && bound_eq b d -> (BOT, BOT)
-    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, Z.pred c), Itv(Z.succ b, d))
-    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(Z.succ d, b), Itv(c, Z.pred a))
-    | _ -> invalid_arg "bound_div"
-
-  let geq a b = union (gt a b) (eq a b)
+    | BOT, _ | _, BOT | _ when disjoint a b -> (a, b)
+    | Itv(a, b), Itv(c, d) when bound_cmp a c = 0 && bound_cmp b d = 0 -> (BOT, BOT)
+    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, bound_pred c), Itv(bound_succ b, d))
+    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(bound_succ d, b), Itv(c, bound_pred a))
+    | _ -> (BOT, BOT)
 
   let gt a b = match a, b with
     | BOT, _ | _, BOT -> (a, b)
-    | Itv(a, b), Itv(c, d) when disjoint a b -> if bound_cmp b c < 0
+    | Itv(a', b'), Itv(c, d) when disjoint a b -> if bound_cmp b' c < 0
                                                 then (BOT, b)
                                                 else (a, BOT)
+    | Itv(a, b), Itv(c, d) when bound_cmp b d > 0 -> (Itv(bound_succ d, b), BOT)
+    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (BOT, Itv(bound_succ b, d))
+    | _ -> (BOT, BOT)
+
+  let geq a b = let (a', b') = gt a b in
+                let (a'', b'') = eq a b in
+                (union a' a'', union b' b'')
 
   let top = Itv(MINF, PINF)
 
@@ -172,5 +189,14 @@ module Intervals = (struct
     | AST_MINUS -> sub x y
     | AST_MULTIPLY -> mul x y
     | AST_DIVIDE -> div x y
+
+  let compare x y op =
+    match op with
+    | AST_EQUAL -> eq x y
+    | AST_NOT_EQUAL -> neq x y
+    | AST_GREATER_EQUAL -> geq x y
+    | AST_GREATER -> gt x y
+    | AST_LESS_EQUAL -> let y', x' = geq y x in x', y'
+    | AST_LESS -> let y', x' = gt y x in x', y'
                            
 end: VALUE_DOMAIN)
