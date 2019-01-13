@@ -99,7 +99,7 @@ module Intervals = (struct
 
   let inter x y =
     lift2 (fun a b c d ->
-        if b < c || d < a then
+        if bound_cmp b c < 0 || bound_cmp d a < 0 then
           BOT
         else
           Itv(bound_max [a; c], bound_min [b; d])
@@ -118,7 +118,7 @@ module Intervals = (struct
     lift1 (fun a b -> Itv(bound_neg b, bound_neg a)) x
 
   let add x y =
-    lift2 (fun a b c d -> Itv(bound_add a c, bound_add c d)) x y
+    lift2 (fun a b c d -> Itv(bound_add a c, bound_add b d)) x y
 
   let sub x y =
     lift2 (fun a b c d -> Itv(bound_sub a d, bound_sub b c)) x y
@@ -128,7 +128,7 @@ module Intervals = (struct
         let perms = [bound_mul a c; bound_mul a d; bound_mul b c; bound_mul b d] in
         let lo = bound_min perms in
         let hi = bound_max perms in
-        Itv(hi, lo)
+        Itv(lo, hi)
       ) x y
 
   let div' x y =
@@ -148,22 +148,32 @@ module Intervals = (struct
     let negative = div' x (inter y (Itv(MINF, Int(Z.minus_one)))) in
     union positive negative
 
+  let join a b = union a b
+
+  let meet a b = match a, b with
+    | BOT, _ | _, BOT -> BOT
+    | Itv(a, b), Itv(c, d) -> if bound_max [a; c] = a then Itv(a, b) else Itv(c, d)
+
+  let widen = join
+
   let eq a b = match a, b with
     | BOT, _ | _, BOT -> (BOT, BOT)
     | _ -> (inter a b, inter a b)
 
-  let neq a b = match a, b with
+  let neq a b =
+    match a, b with
     | BOT, _ | _, BOT | _ when disjoint a b -> (a, b)
-    | Itv(a, b), Itv(c, d) when bound_cmp a c = 0 && bound_cmp b d = 0 -> (BOT, BOT)
-    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, bound_pred c), Itv(bound_succ b, d))
-    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(bound_succ d, b), Itv(c, bound_pred a))
+    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, b), Itv(bound_succ b, d))
+    | Itv(a, b), Itv(c, d) when bound_cmp b d > 0 -> (Itv(bound_succ c, b), Itv(c, d))
+    | Itv(a, b), Itv(c, d) when bound_cmp a c < 0 -> (Itv(a, b), Itv(bound_succ b, d))
+    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(bound_succ a, b), Itv(c, a))
     | _ -> (BOT, BOT)
 
   let gt a b = match a, b with
     | BOT, _ | _, BOT -> (a, b)
     | Itv(a', b'), Itv(c, d) when disjoint a b -> if bound_cmp b' c < 0
-                                                then (BOT, b)
-                                                else (a, BOT)
+                                                then (BOT, BOT)
+                                                else (a, b)
     | Itv(a, b), Itv(c, d) when bound_cmp b d > 0 -> (Itv(bound_succ d, b), BOT)
     | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (BOT, Itv(bound_succ b, d))
     | _ -> (BOT, BOT)
@@ -178,7 +188,7 @@ module Intervals = (struct
 
   let const c = Itv(Int c, Int c)
 
-  let rand x y = Itv(Int x, Int y)
+  let rand x y = if Z.compare x y <= 0 then Itv(Int x, Int y) else BOT
 
   let unary x op = match op with
     | AST_UNARY_PLUS -> x
@@ -198,5 +208,15 @@ module Intervals = (struct
     | AST_GREATER -> gt x y
     | AST_LESS_EQUAL -> let y', x' = geq y x in x', y'
     | AST_LESS -> let y', x' = gt y x in x', y'
+
+  let bwd_unary x op r = match op with
+    | AST_UNARY_PLUS -> x 
+    | AST_UNARY_MINUS -> x 
+
+  let bwd_binary x y op r = match op with
+    | AST_PLUS -> x, y
+    | AST_MINUS -> x, y
+    | AST_MULTIPLY -> x, y
+    | AST_DIVIDE -> x, y
                            
 end: VALUE_DOMAIN)
