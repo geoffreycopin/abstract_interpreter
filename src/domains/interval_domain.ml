@@ -71,6 +71,15 @@ module Intervals = (struct
     | BOT
     | Itv of bound * bound
 
+  let is_const x = match x with
+    | Itv(a, b) when bound_cmp a b == 0 -> true
+    | _ -> false
+
+  let itv_size a = match a with
+    | BOT -> Int(Z.zero)
+    | Itv(Int(a), Int(b)) when Z.compare a b < 0 -> Int(Z.abs (Z.sub a b))
+    | _ -> MINF
+
   let is_bottom x = match x with
     | BOT -> true
     | _ -> false
@@ -91,6 +100,18 @@ module Intervals = (struct
   let lift2 f x y = match x, y with
     | BOT,_ | _,BOT -> BOT
     | Itv(a,b), Itv(c, d) -> f a b c d
+
+  let remove_const itv const =
+    lift1 (fun a b ->
+        if bound_cmp a const > 0 || bound_cmp b const < 0 then
+          itv
+        else if is_const itv then
+          BOT
+        else
+          let x = Itv(bound_succ a, b) in
+          let y = Itv(a, bound_pred b) in
+          if bound_cmp (itv_size x) (itv_size y) >= 0 then x else y
+      ) itv
 
   let union x y = match x, y with
     | BOT, b -> b
@@ -152,7 +173,7 @@ module Intervals = (struct
 
   let meet a b = match a, b with
     | BOT, _ | _, BOT -> BOT
-    | Itv(a, b), Itv(c, d) -> if bound_max [a; c] = a then Itv(a, b) else Itv(c, d)
+    | Itv(a, b), Itv(c, d) -> Itv(bound_max [a; c], bound_min [b; d])
 
   let widen = join
 
@@ -162,21 +183,23 @@ module Intervals = (struct
 
   let neq a b =
     match a, b with
-    | BOT, _ | _, BOT | _ when disjoint a b -> (a, b)
-    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (Itv(a, b), Itv(bound_succ b, d))
-    | Itv(a, b), Itv(c, d) when bound_cmp b d > 0 -> (Itv(bound_succ c, b), Itv(c, d))
-    | Itv(a, b), Itv(c, d) when bound_cmp a c < 0 -> (Itv(a, b), Itv(bound_succ b, d))
-    | Itv(a, b), Itv(c, d) when bound_cmp a c > 0 -> (Itv(bound_succ a, b), Itv(c, a))
-    | _ -> (BOT, BOT)
+    | Itv(a', b'), Itv(c, d) when is_const a && is_const b
+                                  && bound_cmp a' d == 0 -> (BOT, BOT)
+    | Itv(a', _), Itv(_, _) when is_const a -> (a, remove_const b a')
+    | Itv(_, _), Itv(c, _) when is_const b -> (remove_const a c, b)
+    | _ -> (a, b)
 
-  let gt a b = match a, b with
+  let gt a b =
+    match a, b with
     | BOT, _ | _, BOT -> (a, b)
     | Itv(a', b'), Itv(c, d) when disjoint a b -> if bound_cmp b' c < 0
                                                 then (BOT, BOT)
                                                 else (a, b)
-    | Itv(a, b), Itv(c, d) when bound_cmp b d > 0 -> (Itv(bound_succ d, b), BOT)
-    | Itv(a, b), Itv(c, d) when bound_cmp b d < 0 -> (BOT, Itv(bound_succ b, d))
-    | _ -> (BOT, BOT)
+    | Itv(a, b), Itv(c, d) -> let a_lo = bound_max [a; bound_succ c] in
+                              let a_hi = b in
+                              let b_lo = c in
+                              let b_hi = bound_min [d; bound_pred b] in
+                              (Itv(a_lo, a_hi), Itv(b_lo, b_hi))
 
   let geq a b = let (a', b') = gt a b in
                 let (a'', b'') = eq a b in
