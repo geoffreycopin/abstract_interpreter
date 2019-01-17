@@ -175,7 +175,12 @@ module Intervals = (struct
     | BOT, _ | _, BOT -> BOT
     | Itv(a, b), Itv(c, d) -> Itv(bound_max [a; c], bound_min [b; d])
 
-  let widen = join
+  let widen a b =
+    lift2 (fun a b c d ->
+        let lo = if bound_cmp c a < 0 then MINF else c in
+        let hi = if bound_cmp d b > 0 then PINF else d in
+        Itv(lo, hi)
+      ) a b
 
   let eq a b = match a, b with
     | BOT, _ | _, BOT -> (BOT, BOT)

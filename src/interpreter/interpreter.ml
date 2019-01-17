@@ -134,10 +134,14 @@ module Interprete(D : DOMAIN) =
         D.assign a i e
           
     | AST_if (e,s1,Some s2) ->
-        (* compute both branches *)
+       (* compute both branches *)
+       print_string "BEFORE IF: ";
+       D.print_all Format.std_formatter a;
         let t = eval_stat (filter a e true ) s1 in
         let f = eval_stat (filter a e false) s2 in
         (* then join *)
+         print_string "AFTER JOIN: ";
+       D.print_all Format.std_formatter (D.join t f);
         D.join t f
           
     | AST_if (e,s1,None) ->
@@ -148,11 +152,12 @@ module Interprete(D : DOMAIN) =
         D.join t f
           
     | AST_while (e,s) ->
-        (* simple fixpoint *)
+       (* simple fixpoint *)
         let rec fix (f:t -> t) (x:t) : t = 
           let fx = f x in
-          if D.subset fx x then fx
-          else fix f fx
+          let wx = D.widen x fx in
+          if D.subset wx x then wx
+          else fix f wx
         in
         (* function to accumulate one more loop iteration:
            F(X(n+1)) = X(0) U body(F(X(n))
