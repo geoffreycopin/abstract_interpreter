@@ -65,6 +65,11 @@ let bound_pred a = match a with
   | MINF | PINF -> a
   | Int(x) -> Int(Z.pred x)
 
+let bound_neg a = match a with
+  | PINF -> MINF
+  | MINF -> PINF
+  | Int(x) -> Int(Z.neg x)
+
 module Intervals = (struct
 
   type t =
@@ -197,9 +202,7 @@ module Intervals = (struct
   let gt a b =
     match a, b with
     | BOT, _ | _, BOT -> (a, b)
-    | Itv(a', b'), Itv(c, d) when disjoint a b -> if bound_cmp b' c < 0
-                                                then (BOT, BOT)
-                                                else (a, b)
+    | Itv(a, b), Itv(c, d) when bound_cmp c b >= 0 -> (BOT, BOT)
     | Itv(a, b), Itv(c, d) -> let a_lo = bound_max [a; bound_succ c] in
                               let a_hi = b in
                               let b_lo = c in
@@ -237,9 +240,13 @@ module Intervals = (struct
     | AST_LESS_EQUAL -> let y', x' = geq y x in x', y'
     | AST_LESS -> let y', x' = gt y x in x', y'
 
+  let bwd_unary_minus a b = match a, b with
+    | Itv(a, b), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_neg s, bound_neg r))
+    | _ -> BOT
+
   let bwd_unary x op r = match op with
-    | AST_UNARY_PLUS -> x 
-    | AST_UNARY_MINUS -> x 
+    | AST_UNARY_PLUS -> bwd_unary_minus x r
+    | AST_UNARY_MINUS -> r
 
   let bwd_binary x y op r = match op with
     | AST_PLUS -> x, y
