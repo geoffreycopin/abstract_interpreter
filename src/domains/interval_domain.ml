@@ -248,10 +248,25 @@ module Intervals = (struct
     | AST_UNARY_PLUS -> bwd_unary_minus x r
     | AST_UNARY_MINUS -> r
 
+  let bwd_binary_plus a b r = match a, b, r with
+    | Itv(a, b), Itv(c, d), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_sub r d, bound_sub s c)),
+                                         inter (Itv(c, d)) (Itv(bound_sub r b, bound_sub s a))
+    | _ -> a, b
+
+  let bwd_binary_minus a b r =  match a, b, r with
+    | Itv(a, b), Itv(c, d), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_add r d, bound_add s c)),
+                                         inter (Itv(c, d)) (Itv(bound_sub a s, bound_sub b r))
+    | _ -> a, b
+
+  let bwd_binary_mul a b r =  match a, b, r with
+    | Itv(a, b), Itv(c, d), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_div r d, bound_div s c)),
+                                         inter (Itv(c, d)) (Itv(bound_div r b, bound_div s a))
+    | _ -> a, b
+
   let bwd_binary x y op r = match op with
-    | AST_PLUS -> x, y
-    | AST_MINUS -> x, y
-    | AST_MULTIPLY -> x, y
+    | AST_PLUS -> bwd_binary_plus x y r
+    | AST_MINUS -> bwd_binary_minus x y r
+    | AST_MULTIPLY -> bwd_binary_mul x y r
     | AST_DIVIDE -> x, y
                            
 end: VALUE_DOMAIN)

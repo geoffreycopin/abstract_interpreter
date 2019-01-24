@@ -23,6 +23,8 @@ open Domain
 (* for debugging *)
 let trace = ref false
 
+let delay = ref 0
+
 
 
 (* utilities *)
@@ -149,11 +151,11 @@ module Interprete(D : DOMAIN) =
           
     | AST_while (e,s) ->
        (* simple fixpoint *)
-       let rec fix (f:t -> t) (x:t) : t =
+       let rec fix (f:t -> t) (x:t) (d:int) : t =
          let fx = f x in
-          let wx = D.widen x fx in
+          let wx = if d >= !delay then D.widen x fx else fx in
           if D.subset wx x then wx
-          else fix f wx
+          else fix f wx (d + 1)
         in
         (* function to accumulate one more loop iteration:
            F(X(n+1)) = X(0) U body(F(X(n))
@@ -161,7 +163,7 @@ module Interprete(D : DOMAIN) =
          *)        
         let f x = D.join a (eval_stat (filter x e true) s) in
         (* compute fixpoint from the initial state (i.e., a loop invariant) *)
-        let inv = fix f a in
+        let inv = fix f a 0 in
         (* and then filter by exit condition *)
         filter inv e false
 

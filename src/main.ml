@@ -52,8 +52,9 @@ let main () =
      "Use the intervals abstract domain";
 
      (* options to add *)
-     (* -interval *)
-     (* -delay *)
+     "-delay",
+     Arg.Set_int Interpreter.delay,
+     "Enable delayed widening";
      (* -unroll *)
      (* -parity-interval *)
 
