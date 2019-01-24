@@ -23,9 +23,9 @@ let bound_add (a:bound) (b:bound) = match a, b with
   | Int i, Int j -> Int (Z.add i j)
 
 let bound_sub (a:bound) (b:bound) = match a, b with
-  | MINF, PINF | PINF, MINF | PINF, PINF -> invalid_arg "bound_sub"
-  | MINF, _ | _, MINF | _, PINF -> MINF
-  | PINF, _ -> PINF
+  | MINF, PINF | PINF, PINF -> invalid_arg "bound_sub"
+  | MINF, _ | _, PINF -> MINF
+  | PINF, _ | _, MINF -> PINF
   | Int(a), Int(b) -> Int(Z.sub a b)
 
 let bound_mul (a:bound) (b:bound) = match a, b with
@@ -47,6 +47,8 @@ let bound_div (a:bound) (b:bound) = match a, b with
 
 let bound_cmp (a:bound) (b:bound) = match a, b with
   | MINF, MINF | PINF, PINF -> 0
+  | MINF, PINF -> -1
+  | PINF, MINF -> 1
   | MINF, _ | _, PINF -> -1
   | _, MINF | PINF, _ -> 1
   | Int i, Int j -> Z.compare i j
@@ -147,7 +149,11 @@ module Intervals = (struct
     lift2 (fun a b c d -> Itv(bound_add a c, bound_add b d)) x y
 
   let sub x y =
-    lift2 (fun a b c d -> Itv(bound_sub a d, bound_sub b c)) x y
+    lift2 (fun a b c d ->
+        let lo = bound_min [bound_sub a c; bound_sub a d] in
+        let hi = bound_max [bound_sub b c; bound_sub b d] in
+        Itv(lo, hi)
+      ) x y
 
   let mul x y =
     lift2 (fun a b c d ->
@@ -182,10 +188,9 @@ module Intervals = (struct
 
   let widen a b =
     lift2 (fun a b c d ->
-        let lo = if bound_cmp c a < 0 then MINF else c in
-        let hi = if bound_cmp d b > 0 then PINF else d in
-        Itv(lo, hi)
-      ) a b
+        let lo = if bound_cmp c a < 0 then MINF else bound_min [c; a] in
+        let hi = if bound_cmp d b > 0 then PINF else bound_max [d; b] in
+        Itv(lo, hi)) a b
 
   let eq a b = match a, b with
     | BOT, _ | _, BOT -> (BOT, BOT)
@@ -199,8 +204,7 @@ module Intervals = (struct
     | Itv(_, _), Itv(c, _) when is_const b -> (remove_const a c, b)
     | _ -> (a, b)
 
-  let gt a b =
-    match a, b with
+  let gt a b = match a, b with
     | BOT, _ | _, BOT -> (a, b)
     | Itv(a, b), Itv(c, d) when bound_cmp c b >= 0 -> (BOT, BOT)
     | Itv(a, b), Itv(c, d) -> let a_lo = bound_max [a; bound_succ c] in
@@ -240,13 +244,14 @@ module Intervals = (struct
     | AST_LESS_EQUAL -> let y', x' = geq y x in x', y'
     | AST_LESS -> let y', x' = gt y x in x', y'
 
-  let bwd_unary_minus a b = match a, b with
-    | Itv(a, b), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_neg s, bound_neg r))
+  let bwd_unary_minus a b = 
+    match a, b with
+    | _, Itv(r, s) -> Itv(bound_neg s, bound_neg r)
     | _ -> BOT
 
   let bwd_unary x op r = match op with
-    | AST_UNARY_PLUS -> bwd_unary_minus x r
-    | AST_UNARY_MINUS -> r
+    | AST_UNARY_PLUS -> r
+    | AST_UNARY_MINUS -> bwd_unary_minus x r
 
   let bwd_binary_plus a b r = match a, b, r with
     | Itv(a, b), Itv(c, d), Itv(r, s) -> inter (Itv(a, b)) (Itv(bound_sub r d, bound_sub s c)),

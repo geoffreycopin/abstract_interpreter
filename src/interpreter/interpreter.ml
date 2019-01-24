@@ -143,7 +143,7 @@ module Interprete(D : DOMAIN) =
         D.join t f
           
     | AST_if (e,s1,None) ->
-        (* compute both branches *)
+       (* compute both branches *)
         let t = eval_stat (filter a e true ) s1 in
         let f = filter a e false in
         (* then join *)
@@ -153,9 +153,10 @@ module Interprete(D : DOMAIN) =
        (* simple fixpoint *)
        let rec fix (f:t -> t) (x:t) (d:int) : t =
          let fx = f x in
-          let wx = if d >= !delay then D.widen x fx else fx in
-          if D.subset wx x then wx
-          else fix f wx (d + 1)
+         if D.subset fx x then fx
+         else
+           let wx = if d >= !delay then D.widen x fx else fx in
+           fix f wx (d + 1)
         in
         (* function to accumulate one more loop iteration:
            F(X(n+1)) = X(0) U body(F(X(n))
