@@ -25,6 +25,8 @@ let trace = ref false
 
 let delay = ref 0
 
+let unroll = ref 0
+
 
 
 (* utilities *)
@@ -157,12 +159,22 @@ module Interprete(D : DOMAIN) =
          else
            let wx = if d >= !delay then D.widen x fx else fx in
            fix f wx (d + 1)
-        in
+       in
+
+       (* unrolling *)
+       let rec do_unroll (x:t) (d:int) =
+         if d >= !unroll then x
+         else let xi = do_unroll (eval_stat (filter x e true) s) (d + 1) in
+              if D.is_bottom xi then x else xi
+       in
+
+       (* Perform unrolling *)
+       let a = do_unroll a 0 in
         (* function to accumulate one more loop iteration:
            F(X(n+1)) = X(0) U body(F(X(n))
            we apply the loop body and add back the initial abstract state
          *)        
-        let f x = D.join a (eval_stat (filter x e true) s) in
+       let f x = D.join a (eval_stat (filter x e true) s) in
         (* compute fixpoint from the initial state (i.e., a loop invariant) *)
         let inv = fix f a 0 in
         (* and then filter by exit condition *)

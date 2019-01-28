@@ -56,6 +56,9 @@ let main () =
      Arg.Set_int Interpreter.delay,
      "Enable delayed widening";
      (* -unroll *)
+     "-unroll",
+       Arg.Set_int Interpreter.unroll,
+     "Enable loop unrolling";
      (* -parity-interval *)
 
     ]
