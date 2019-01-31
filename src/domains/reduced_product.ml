@@ -1,56 +1,51 @@
 open Abstract_syntax_tree
 open Value_domain
+open Value_reduction
 open Domain
 
-module ReducedProduct (V1: VALUE_DOMAIN) (V2: VALUE_DOMAIN) = (struct
+module ReducedProduct (R: VALUE_REDUCTION) = (struct
 
-  type t = V1.t * V2.t
+  type t = R.A.t * R.B.t
 
-  let top = V1.top, V2.top       
+  let top = R.A.top, R.B.top       
 
-  let bottom = V1.bottom, V2.bottom
+  let bottom = R.A.bottom, R.B.bottom
 
-  let is_bottom (x1, x2) = V1.is_bottom x1 || V2.is_bottom x2
+  let is_bottom (x1, x2) = R.A.is_bottom x1 || R.B.is_bottom x2
 
-  let const x = V1.const x, V2.const x
+  let const x = R.A.const x, R.B.const x
 
-  let rand x y = V1.rand x y, V2.rand x y
+  let rand x y = R.A.rand x y, R.B.rand x y
 
   let print fmt (x1,x2) =
-      V1.print fmt x1;
+      R.A.print fmt x1;
       Format.fprintf fmt " ∧ ";
-      V2.print fmt x2
+      R.B.print fmt x2
 
-  let join (x1, x2) (y1, y2) = V1.join x1 y1, V2.join x2 y2
+  let join (x1, x2) (y1, y2) = R.A.join x1 y1, R.B.join x2 y2
 
-  let meet (x1, x2) (y1, y2) = V1.meet x1 y1, V2.meet x2 y2
+  let meet (x1, x2) (y1, y2) = R.A.meet x1 y1, R.B.meet x2 y2
 
-  let subset (x1, x2) (y1, y2) = V1.subset x1 y1 && V2.subset x2 y2
+  let subset (x1, x2) (y1, y2) = R.A.subset x1 y1 && R.B.subset x2 y2
 
-  let widen (x1, x2) (y1, y2) = V1.widen x1 y1, V2.widen x2 y2
+  let widen (x1, x2) (y1, y2) = R.A.widen x1 y1, R.B.widen x2 y2
 
   let compare (x1, x2) (y1, y2) op =
-    let (x1', y1') = V1.compare x1 y1 op in
-    let (x2', y2') = V2.compare x2 y2 op in
+    let (x1', y1') = R.A.compare x1 y1 op in
+    let (x2', y2') = R.B.compare x2 y2 op in
     (x1', x2'), (y1', y2')
 
-  let unary (x1, x2) op = V1.unary x1 op, V2.unary x2 op
+  let unary (x1, x2) op = R.A.unary x1 op, R.B.unary x2 op
 
   let bwd_unary (x1, x2) op (r1, r2) =
-    V1.bwd_unary x1 op r1, V2.bwd_unary x2 op r2
+    R.A.bwd_unary x1 op r1, R.B.bwd_unary x2 op r2
 
   let binary (x1, x2) (y1, y2) op =
-    V1.binary x1 y1 op, V2.binary x2 y2 op
+    R.A.binary x1 y1 op, R.B.binary x2 y2 op
 
   let bwd_binary (x1, x2) (y1, y2) op (r1, r2) =
-    let (x1', y1') = V1.bwd_binary x1 y1 op r1 in
-    let (x2', y2') = V2.bwd_binary x2 y2 op r2 in
+    let (x1', y1') = R.A.bwd_binary x1 y1 op r1 in
+    let (x2', y2') = R.B.bwd_binary x2 y2 op r2 in
     (x1', x2'), (y1', y2')
                 
-end: VALUE_DOMAIN)
-
-
-module IntervalParity = (struct
-  include ReducedProduct (Parity_domain.Parity) (Interval_domain.Intervals)
-  let refine (x:Interval_domain.Intervals.t) y = x                                  
 end: VALUE_DOMAIN)

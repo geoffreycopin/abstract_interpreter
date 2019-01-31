@@ -1,6 +1,7 @@
 open Abstract_syntax_tree
 open Value_domain
 
+module Bound = struct
 type bound =
   | Int of Z.t
   | PINF
@@ -71,14 +72,14 @@ let bound_neg a = match a with
   | PINF -> MINF
   | MINF -> PINF
   | Int(x) -> Int(Z.neg x)
-
-type interval =
-    | BOT
-    | Itv of bound * bound
+end
 
 module Intervals = (struct
-
-  type t = interval
+  open Bound
+                        
+  type t =
+    | BOT
+    | Itv of bound * bound
 
   let is_const x = match x with
     | Itv(a, b) when bound_cmp a b == 0 -> true

@@ -3,11 +3,11 @@ open Value_domain
    
 module Parity = (struct
                   
-  type t =
-    | BOT
-    | ODD
-    | EVEN
-    | TOP
+  type t = BOT | ODD | EVEN | TOP
+
+  let is_even x = match x with
+    | EVEN -> true
+    | _ -> false
     
   let string_of_t x = match x with
     | BOT -> "⊥"
@@ -29,7 +29,15 @@ module Parity = (struct
 
   let is_bottom x = match x with
     | BOT -> true
-    | _ -> false   
+    | _ -> false
+
+  let is_even x = match x with
+    | EVEN -> true
+    | _ -> false
+
+  let is_odd x = match x with
+    | ODD -> true
+    | _ -> false
 
   let print fmt x = Format.fprintf fmt "%s" (string_of_t x)
 

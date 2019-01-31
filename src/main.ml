@@ -22,7 +22,7 @@ module ParityIntervalAnalysis =
   Interpreter.Interprete
     (Non_relational_domain.NonRelational
        (Reduced_product.ReducedProduct
-          (Parity_domain.Parity) (Interval_domain.Intervals)))
+          (Parity_reduction.ParityIntervalsReduction)))
   
     
 (* parse and print filename *)
