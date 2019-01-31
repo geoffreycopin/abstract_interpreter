@@ -176,7 +176,7 @@ module Interprete(D : DOMAIN) =
          *)        
        let f x = D.join a (eval_stat (filter x e true) s) in
         (* compute fixpoint from the initial state (i.e., a loop invariant) *)
-        let inv = fix f a 0 in
+       let inv = fix f a 0 in
         (* and then filter by exit condition *)
         filter inv e false
 

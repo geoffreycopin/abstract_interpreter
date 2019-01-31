@@ -72,11 +72,13 @@ let bound_neg a = match a with
   | MINF -> PINF
   | Int(x) -> Int(Z.neg x)
 
-module Intervals = (struct
-
-  type t =
+type interval =
     | BOT
     | Itv of bound * bound
+
+module Intervals = (struct
+
+  type t = interval
 
   let is_const x = match x with
     | Itv(a, b) when bound_cmp a b == 0 -> true

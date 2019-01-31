@@ -6,7 +6,7 @@
 
 
 module ConcreteAnalysis =
-  Interpreter.Interprete(Concrete_domain.Concrete)
+  Interpreter.Interprete (Concrete_domain.Concrete)
     
 module ConstantAnalysis =
   Interpreter.Interprete
@@ -16,7 +16,14 @@ module ConstantAnalysis =
 module IntervalsAnalysis =
   Interpreter.Interprete
     (Non_relational_domain.NonRelational
-      (Interval_domain.Intervals))
+       (Interval_domain.Intervals))
+
+module ParityIntervalAnalysis =
+  Interpreter.Interprete
+    (Non_relational_domain.NonRelational
+       (Reduced_product.ReducedProduct
+          (Parity_domain.Parity) (Interval_domain.Intervals)))
+  
     
 (* parse and print filename *)
 let doit filename =
@@ -60,6 +67,9 @@ let main () =
        Arg.Set_int Interpreter.unroll,
      "Enable loop unrolling";
      (* -parity-interval *)
+     "-parity-interval",
+     Arg.Unit (fun () -> action := ParityIntervalAnalysis.eval_prog),
+     "Use the parity-interval reduced product domain";
 
     ]
     (* handle filenames *)
