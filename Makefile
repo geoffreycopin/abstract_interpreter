@@ -80,6 +80,7 @@ MLFILES = \
   $(SRC)/domains/constant_domain.ml \
   $(SRC)/domains/interval_domain.ml \
   $(SRC)/domains/parity_domain.ml \
+  $(SRC)/domains/reduced_product.ml \
   $(SRC)/domains/non_relational_domain.ml \
   $(SRC)/interpreter/interpreter.ml \
   $(SRC)/main.ml
